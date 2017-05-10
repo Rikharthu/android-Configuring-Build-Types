@@ -1,0 +1,146 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.3"
+    defaultConfig {
+        applicationId "com.example.uberv.configuringbuildtypes"
+        minSdkVersion 19
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        // defines certain properties that Gradle uses when building and packaging your app
+        // used to apply different packaging and building settings
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+        }
+        /**
+         * The 'initWith' property allows you to copy configurations from other build types,
+         * so you don't have to configure one from the beginning. You can then configure
+         * just the settings you want to change. The following line initializes
+         * 'jnidebug' using the debug build type, and changes only the
+         * applicationIdSuffix and versionNameSuffix settings.
+         */
+        jnidebug {
+            // This copies the debuggable attribute and debug signing configurations.
+            initWith debug
+
+            applicationIdSuffix ".jnidebug"
+            jniDebuggable true
+        }
+    }
+
+    // To combine multiple product flavors configure flavorDimensions you want to use
+    // ordered by priority (higher to lower).
+    // Then assign a "dimension" to each product flavor in productFlavors
+    flavorDimensions "api", "mode"
+    // results into <"api flavor"><"Mode flavor><Build type>
+    // example: minApi24Full
+
+
+    productFlavors {
+        // specifies different features and device requirements such as source code, resources
+        // and minimum API levels
+        demo {
+            dimension "mode"
+            applicationIdSuffix ".demo"
+            versionNameSuffix "-demo"
+        }
+        full {
+            dimension "mode"
+            applicationIdSuffix ".full"
+            // applicationId will result into
+            // com.example.uberv.configuringbuildtypes.full.debug or
+            // com.example.uberv.configuringbuildtypes.full.release or
+            // com.example.uberv.configuringbuildtypes.full.jnidebug depending on build type used
+            versionNameSuffix "-full"
+            // <versionName><versionNameSuffix> : 1.0-full
+        }
+
+        // Configurations in the "api" product flavors override/appear first than those in "mode" flavors
+        // and defaultConfig block Gradle determines the priority between flavor dimensions based
+        // on the order in which they appear next to to the flavorDimensions property above (highest->lowest)
+        minApi24 {
+            dimension "api"
+            minSdkVersion '24'
+            // To ensure the target device receives the version of the app with
+            // the highest compatible API level, assign version codes in increasing
+            // value with API level. To learn more about assigning version codes to
+            // support app updates and uploading to Google Play, read Multiple APK Support
+            versionCode 30000 + android.defaultConfig.versionCode
+            versionNameSuffix "-minApi24"
+        }
+
+        minApi23 {
+            dimension "api"
+            minSdkVersion '23'
+            versionCode 20000 + android.defaultConfig.versionCode
+            versionNameSuffix "-minApi23"
+        }
+
+        minApi21 {
+            dimension "api"
+            minSdkVersion '21'
+            versionCode 10000 + android.defaultConfig.versionCode
+            versionNameSuffix "-minApi21"
+        }
+    }
+
+    // Build variant is a crossproduct of flavor and build type
+    // with name scheme <product flavor><Build type> (such as demoDebug, fullDebug, fullJnidebug.. etc)
+    // go to Build > Select Build Variant to change build variant
+    // In code you can access current build variant parameters through BuildConfig fields
+
+    // Build Variant: [minApi24, minApi23, minApi21][Demo, Full],[Debug, Release]
+    //                 ----------- api -----------   -- mode --    - build type -
+    // Count=3*2*2=12
+
+    // Filter variants
+    // Gradle creates a build variant for every possible combination of the product flavors and build types
+    // you configre, however there may be certain build variants that are not needed / do not make sense
+
+    // Create a variant filter by using variantFilter (this is a groovy closure that will be called by Gradle)
+    // Suppose we plan to support only API 23+ for the demo version
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        // To check for a certain build type, use variant.buildType.name == "<buildType>"
+        if (names.contains("minApi21") && names.contains("demo")) {
+            // Gradle ignores any variants that satisfy the conditions above.
+            setIgnore(true)
+        }
+    }
+    // as result minApi23 will not have demo flavor
+
+    // To see how to organize source sets for different flavors and build types
+    // Go to Gradle-><Your App Name>->Tasks->android and double-click sourceSets
+    // To view the report, open the Gradle Console
+    // Either create requried folders manually, or open the Project View,
+    // right click the src directory and select New > Folder > Java Folder
+    // and selected required Target Source Set
+    // Same applies to creating new files for specificsourceset
+
+    // Build with source sets
+    // demoDebug build variant will build with this priority:
+    //    1. src/demoDebug/ (build variant source set)
+    //    2. src/debug/ (build type source set)
+    //    3. src/demo/ (product flavor source set)
+    //    4. src/main/ (main source set)
+
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+}
