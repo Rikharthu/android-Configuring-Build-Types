@@ -116,7 +116,7 @@ android {
             setIgnore(true)
         }
     }
-    // as result minApi23 will not have demo flavor
+    // as result minApi21 will not have demo flavor
 
     // To see how to organize source sets for different flavors and build types
     // Go to Gradle-><Your App Name>->Tasks->android and double-click sourceSets
@@ -132,6 +132,7 @@ android {
     //    2. src/debug/ (build type source set)
     //    3. src/demo/ (product flavor source set)
     //    4. src/main/ (main source set)
+    // build variant > build type > product flavor > main source set > library dependencies 
 
 }
 
